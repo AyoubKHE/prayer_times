@@ -1,0 +1,189 @@
+body {
+    background-image: linear-gradient(to left, #07001B, #160042);
+    color: #f0f0f0;
+    font-family: "Poppins", sans-serif;
+}
+
+.my-container {
+    width: 90%;
+    margin: auto;
+    margin-top: 50px;
+}
+
+.my-row {
+    padding-top: 20px;
+    padding-bottom: 10px;
+    margin: 0;
+}
+
+.place-name {
+    font-size: 100px;
+
+}
+
+.date {
+    font-size: 20px;
+    color: #dcdcdc;
+    margin-left: 10px;
+}
+
+hr {
+    margin: 7px;
+    height: 1px;
+    border: solid 1px
+}
+
+.prayer {
+    width: 90%;
+    margin: auto;
+    margin-bottom: 20px;
+}
+
+.prayer-header {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    background-image: linear-gradient(to left, #6129B9, #5212E1);
+    height: 30px;
+    padding-left: 3px;
+}
+
+.prayer-name {
+    font-size: 17px;
+    font-weight: 400;
+}
+
+.prayer-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #dcdcdc;
+    height: 140px;
+}
+
+.prayer-time {
+    color: #151515;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.dropdown {
+    text-align: right;
+}
+
+.dropdown button {
+    background-color: darkslateblue;
+}
+
+.dropdown button:hover {
+    background-color: darkslateblue;
+}
+
+.inputs {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.input-place,
+.input-coordinates,
+.input-date {
+    width: 100%;
+    height: 95%;
+    outline: none;
+    border-radius: 5px;
+    padding-left: 5px;
+}
+
+.input-coordinates {
+    width: 68%;
+}
+
+.input-date {
+    width: 100%;
+}
+
+
+
+/*! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
+.search {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.search__input {
+    font-family: inherit;
+    font-size: inherit;
+    background-color: #f4f2f2;
+    border: none;
+    color: #646464;
+    padding: 0.7rem 1rem;
+    border-radius: 30px;
+    width: 12em;
+    transition: all ease-in-out .5s;
+    margin-right: -2rem;
+}
+
+.search__input:hover,
+.search__input:focus {
+    box-shadow: 0 0 1em #00000013;
+}
+
+.search__input:focus {
+    outline: none;
+    background-color: #f0eeee;
+}
+
+.search__input::-webkit-input-placeholder {
+    font-weight: 100;
+    color: #ccc;
+}
+
+.search__input:focus+.search__button {
+    background-color: #f0eeee;
+}
+
+.search__button {
+    border: none;
+    background-color: #f4f2f2;
+    margin-top: .1em;
+}
+
+.search__button:hover {
+    cursor: pointer;
+}
+
+.search__icon {
+    height: 1.3em;
+    width: 1.3em;
+    fill: black;
+}
+
+/*! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
+
+
+
+
+
+
+
+
+
+@media all and (max-width:512px) {
+    .place-name {
+        font-size: 80px;
+    }
+}
+
+@media all and (max-width:767px) {
+    .dropdown {
+        text-align: center;
+    }
+
+    .btn-search {
+        text-align: center;
+    }
+}
