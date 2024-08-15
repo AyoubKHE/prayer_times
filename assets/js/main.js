@@ -24,101 +24,109 @@ function onPrayerTimeApiResponse(prayerTimeApiResponse, date) {
 }
 
 
-function findByPlaceCoordinates(latitude, longitude, date) {
+async function findByPlaceCoordinates(latitude, longitude, date) {
 
-    function onPlaceReverseApiResponse(placeReverseApiResponse, date) {
-        if (typeof placeReverseApiResponse.data !== "string" && Object.keys(placeReverseApiResponse.data).length !== 0 &&
-            !placeReverseApiResponse.data.hasOwnProperty("error")) {
+    function getRealPlaceName(placeReverseApiResponse) {
+        if (
+            typeof placeReverseApiResponse.data !== "string" &&
+            Object.keys(placeReverseApiResponse.data).length !== 0 &&
+            !placeReverseApiResponse.data.hasOwnProperty("error")
+        ) {
 
             let displayName = placeReverseApiResponse.data.display_name.split(",");
-            realPlaceName = displayName[0];
-            countryName = "";
+            let realPlaceName = displayName[0];
+            let countryName = "";
             if (displayName.length > 1) {
                 countryName = ", " + displayName[displayName.length - 1];
             }
 
-            return axios.get(`https://api.aladhan.com/v1/timings/${date.day}-${date.month}-${date.year}`, {
-                params: {
-                    latitude: latitude,
-                    longitude: longitude,
-                    method: 3
-                }
-            });
+            return {
+                "realPlaceName": realPlaceName,
+                "countryName": countryName
+            }
         }
         else {
-            return Promise.reject(new Error("Y' a pas d'information sur les temps de la prière dans cet endroit"));
+            throw new Error("Y' a pas d'information sur les temps de prière dans cet endroit");
         }
     }
 
-    let countryName = "";
-    let realPlaceName = "";
-
-    axios.get(`https://nominatim.openstreetmap.org/reverse`, {
-        params: {
-            lat: Number.parseFloat(latitude),
-            lon: Number.parseFloat(longitude),
-            format: "json"
-        }
-    })
-        .then((placeReverseApiResponse) => {
-
-            return onPlaceReverseApiResponse(placeReverseApiResponse, date);
-
+    try {
+        let placeReverseApiResponse = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
+            params: {
+                lat: Number.parseFloat(latitude),
+                lon: Number.parseFloat(longitude),
+                format: "json"
+            }
         })
-        .then((prayerTimeApiResponse) => {
 
-            onPrayerTimeApiResponse(prayerTimeApiResponse, date);
+        let { realPlaceName, countryName } = getRealPlaceName(placeReverseApiResponse);
 
-            document.querySelector(".place-name").textContent = `${realPlaceName}${countryName}`;
+        let prayerTimeApiResponse = await axios.get(`https://api.aladhan.com/v1/timings/${date.day}-${date.month}-${date.year}`, {
+            params: {
+                latitude: latitude,
+                longitude: longitude,
+                method: 3
+            }
+        });
 
-        })
-        .catch((error) => {
-            console.log("line 115");
-            document.getElementById("spinner").style.display = "none";
-            setTimeout(() => {
-                alert(error.message);
-            }, 50);
-        })
+        onPrayerTimeApiResponse(prayerTimeApiResponse, date);
+
+        document.querySelector(".place-name").textContent = `${realPlaceName}${countryName}`;
+
+    } catch (error) {
+        document.getElementById("spinner").style.display = "none";
+        setTimeout(() => {
+            alert(error.message);
+        }, 50);
+    }
+
 }
 
 
-new Promise((resolve, reject) => {
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                resolve(position);
-            },
-            (error) => {
+(async function getPrayerTimesByCurrentLocation() {
+
+    function requestUserLocation() {
+
+        return new Promise((resolve, reject) => {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve(position);
+                    },
+                    (error) => {
+                        reject(error);
+                    }
+                );
+            }
+            else {
+                let error = new Error("La géolocalisation n'est pas prise en charge par ce navigateur.");
                 reject(error);
             }
-        );
+        })
+
     }
-    else {
-        let error = new Error("La géolocalisation n'est pas prise en charge par ce navigateur.");
-        reject(error);
+
+    try {
+
+        let position = await requestUserLocation();
+
+        let currentDate = new Date();
+
+        let date = {
+            day: currentDate.getDate() < 10 ? "0" + currentDate.getDate() : currentDate.getDate(),
+            month: (currentDate.getMonth() + 1) < 10 ? "0" + (currentDate.getMonth() + 1) : currentDate.getMonth() + 1,
+            year: currentDate.getFullYear()
+        }
+
+        findByPlaceCoordinates(position.coords.latitude, position.coords.longitude, date);
+    } catch (error) {
+        document.getElementById("place-name").textContent = "Chercher un endroit !";
+        console.log(error);
     }
-})
-.then((position) => {
 
-    let currentDate = new Date();
+})();
 
-    let date = {
-        day: currentDate.getDate() < 10 ? "0" + currentDate.getDate() : currentDate.getDate(),
-        month: (currentDate.getMonth() + 1) < 10 ? "0" + (currentDate.getMonth() + 1) : currentDate.getMonth() + 1,
-        year: currentDate.getFullYear()
-    }
-    // return promise
-    findByPlaceCoordinates(position.coords.latitude, position.coords.longitude, date);
-
-})
-.catch((error) => {
-    console.log("line 163");
-    document.getElementById("place-name").textContent = "Chercher un endroit !";
-    console.log(error);
-})
-
-
-function addBlurEventToInptPlace() {
+(function addBlurEventToInptPlace() {
 
     let inptPlace = document.getElementById("input-place");
 
@@ -153,19 +161,16 @@ function addBlurEventToInptPlace() {
             this.value = this.value.substring(0, 1).toUpperCase() + this.value.substring(1).toLowerCase();
         }
     })
-}
+})();
 
-function adjustDate() {
+(function adjustDate() {
 
     let inptDate = document.getElementById("input-date");
     let currentDay = new Date().toISOString().split('T')[0];
 
     inptDate.value = currentDay;
-}
+})();
 
-addBlurEventToInptPlace();
-
-adjustDate();
 
 let btnFindBy = document.getElementById("btn-find-by");
 
@@ -325,65 +330,68 @@ let date = {
     year: inputDate[0]
 }
 
-function findByPlaceName(placeName) {
 
-    function onPlaceApiResponse(placeApiResponse, date) {
+async function findByPlaceName(placeName) {
+
+    function getPlaceInformations(placeApiResponse) {
         if (typeof placeApiResponse.data !== "string" && Object.keys(placeApiResponse.data).length !== 0) {
 
             let latitude = placeApiResponse.data[0].lat;
             let longitude = placeApiResponse.data[0].lon;
 
             let displayName = placeApiResponse.data[0].display_name.split(",");
-            realPlaceName = displayName[0];
-            countryName = "";
+            let realPlaceName = displayName[0];
+            let countryName = "";
             if (displayName.length > 1) {
                 countryName = ", " + displayName[displayName.length - 1];
             }
 
-            return axios.get(`https://api.aladhan.com/v1/timings/${date.day}-${date.month}-${date.year}`, {
-                params: {
-                    latitude: latitude,
-                    longitude: longitude,
-                    method: 3
-                }
-            });
+            return {
+                "latitude": latitude,
+                "longitude": longitude,
+                "realPlaceName": realPlaceName,
+                "countryName": countryName
+            }
+
         }
         else {
-            return Promise.reject(new Error("L'endroit n'est pas trouvé, pourriez vous ajouter plus de détails sur l'endroit"));
+
+            throw new Error("L'endroit n'est pas trouvé, pourriez vous ajouter plus de détails sur l'endroit");
+
         }
     }
 
-    let countryName = "";
-    let realPlaceName = "";
+    try {
+        let placeApiResponse = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+            params: {
+                q: placeName,
+                format: "json"
+            }
+        });
 
-    axios.get(`https://nominatim.openstreetmap.org/search`, {
-        params: {
-            q: placeName,
-            format: "json"
-        }
-    })
-        .then((placeApiResponse) => {
+        let { latitude, longitude, realPlaceName, countryName } = getPlaceInformations(placeApiResponse);
 
-            return onPlaceApiResponse(placeApiResponse, date);
+        let prayerTimeApiResponse = await axios.get(`https://api.aladhan.com/v1/timings/${date.day}-${date.month}-${date.year}`, {
+            params: {
+                latitude: latitude,
+                longitude: longitude,
+                method: 3
+            }
+        });
 
-        })
-        .then((prayerTimeApiResponse) => {
+        onPrayerTimeApiResponse(prayerTimeApiResponse, date);
 
-            onPrayerTimeApiResponse(prayerTimeApiResponse, date);
+        document.querySelector(".place-name").textContent = `${realPlaceName}${countryName}`;
 
-            document.querySelector(".place-name").textContent = `${realPlaceName}${countryName}`;
-        })
-        .catch((error) => {
-            console.log("line 428");
-            document.getElementById("spinner").style.display = "none";
-            setTimeout(() => {
-                alert(error.message);
-            }, 50);
-        })
+    } catch (error) {
+        document.getElementById("spinner").style.display = "none";
+        setTimeout(() => {
+            alert(error.message);
+        }, 50);
+    }
 
 }
 
-// findByPlaceCoordinates(36.7263036, 5.0416587);
 
 btnSearch.addEventListener("click", function () {
 
